@@ -1,0 +1,21 @@
+  services:
+    mosquitto:
+      image: eclipse-mosquitto:2
+      ports:
+        - "1883:1883"
+      volumes:
+        - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+    postgres:
+      image: postgres:18
+      environment:
+        POSTGRES_USER: tunnelwatch
+        POSTGRES_PASSWORD: tunnelwatch
+        POSTGRES_DB: tunnelwatch
+      ports:
+        - "5433:5432"
+      volumes:
+        - pgdata:/var/lib/postgresql
+
+  volumes:
+    pgdata:

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TunnelWatch.Api/TunnelWatch.Api.csproj" />
+    <Project Path="src/TunnelWatch.Application/TunnelWatch.Application.csproj" />
+    <Project Path="src/TunnelWatch.Domain/TunnelWatch.Domain.csproj" />
+    <Project Path="src/TunnelWatch.Infrastructure/TunnelWatch.Infrastructure.csproj" />
+  </Folder>
+</Solution>
