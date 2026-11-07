@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets
+.env
+.env.local
+.env.*.local
+
+# Python tools 
+.venv/
+__pycache__/
