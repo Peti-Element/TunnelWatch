@@ -6,6 +6,6 @@
     /// <param name="Name"></param>
     /// <param name="Value"></param>
     /// <param name="Unit"></param>
-    /// <param name="TimeStamp"></param>
-    public sealed record LatestSignalDto(string Name, double Value, string? Unit, DateTimeOffset TimeStamp);
+    /// <param name="Timestamp"></param>
+    public sealed record LatestSignalDto(string Name, double Value, string? Unit, DateTimeOffset Timestamp);
 }

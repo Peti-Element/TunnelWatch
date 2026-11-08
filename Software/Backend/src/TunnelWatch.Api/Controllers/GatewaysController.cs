@@ -39,6 +39,6 @@ public sealed class GatewaysController(IGatewayQueries queries) : ControllerBase
                 statusCode: StatusCodes.Status404NotFound);
         }
 
-        return Ok(signals.Select(s => new LatestSignalDto(s.Name, s.Value, s.Unit, s.TimeStamp)).ToList());
+        return Ok(signals.Select(s => new LatestSignalDto(s.Name, s.Value, s.Unit, s.Timestamp)).ToList());
     }
 }
