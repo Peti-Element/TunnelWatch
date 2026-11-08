@@ -31,9 +31,9 @@
         /// <param name="timestamp"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool UpdateIfNewer(string? unit, DateTimeOffset timestamp, double value)
+        public bool UpdateIfNotOlder(string? unit, DateTimeOffset timestamp, double value)
         {
-            if (timestamp > Timestamp)
+            if (timestamp >= Timestamp)
             {
                 Unit = unit;
                 Timestamp = timestamp;
