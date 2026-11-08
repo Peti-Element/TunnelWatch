@@ -9,7 +9,7 @@ using TunnelWatch.Application.Signals;
 namespace TunnelWatch.Infrastructure.Mqtt;
 
 /// <summary>
-/// Pozadinski servis koji se spaja na MQTT broker, pretplaćuje na "{TopicPrefix}/#"
+/// Pozadinski servis koji se spaja na MQTT broker, pretplaćuje na TopicFilter (zadano "+/+/+")
 /// i svaku primljenu poruku šalje parseru. Ako broker nije dostupan ili veza padne,
 /// periodično se pokušava ponovno spojiti, a aplikacija nastavlja raditi.
 /// </summary>
@@ -32,7 +32,7 @@ public sealed class MqttSubscriptionService(
             .WithTimeout(TimeSpan.FromSeconds(5))
             .Build();
 
-        var topicFilter = $"{_options.TopicPrefix}/#";
+        var topicFilter = _options.TopicFilter;
         var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
             .WithTopicFilter(topicFilter)
             .Build();

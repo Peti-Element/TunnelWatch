@@ -8,8 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 // MQTT: postavke iz sekcije "Mqtt", parser poruka i pozadinska pretplata na broker.
 builder.Services.AddOptions<MqttOptions>()
     .Bind(builder.Configuration.GetSection(MqttOptions.SectionName))
-    .Validate(o => !string.IsNullOrWhiteSpace(o.Host) && o.Port > 0 && !string.IsNullOrWhiteSpace(o.TopicPrefix),
-        "Sekcija 'Mqtt' mora imati Host, Port i TopicPrefix.")
+    .Validate(o => !string.IsNullOrWhiteSpace(o.Host) && o.Port > 0 && !string.IsNullOrWhiteSpace(o.TopicFilter),
+        "Sekcija 'Mqtt' mora imati Host, Port i TopicFilter.")
     .ValidateOnStart();
 builder.Services.AddSingleton<IMachineMessageParser, MachineMessageParser>();
 builder.Services.AddHostedService<MqttSubscriptionService>();
