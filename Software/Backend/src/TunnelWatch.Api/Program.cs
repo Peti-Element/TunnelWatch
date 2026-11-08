@@ -18,6 +18,7 @@ builder.Services.AddHostedService<MqttSubscriptionService>();
 
 builder.Services.AddDbContext<TunnelWatchDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddScoped<IMachineSignalStore, MachineSignalStore>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
