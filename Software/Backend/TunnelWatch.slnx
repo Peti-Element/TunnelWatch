@@ -5,4 +5,7 @@
     <Project Path="src/TunnelWatch.Domain/TunnelWatch.Domain.csproj" />
     <Project Path="src/TunnelWatch.Infrastructure/TunnelWatch.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TunnelWatch.Application.Tests/TunnelWatch.Application.Tests.csproj" />
+  </Folder>
 </Solution>
