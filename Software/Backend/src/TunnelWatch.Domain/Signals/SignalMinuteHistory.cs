@@ -5,20 +5,20 @@
     /// </summary>
     public sealed class SignalMinuteHistory
     {
-        public SignalMinuteHistory(string gatewayId, string signalName, DateTimeOffset minute, double minValue, double maxValue, double avgValue, int sampleCount, string? unit)
+        public SignalMinuteHistory(string gatewayId, string signalName, DateTimeOffset minute, double minimum, double maximum, double average, int sampleCount, string? unit)
         {
             GatewayId = gatewayId;
             SignalName = signalName;
             Minute = minute;
-            Minimum = minValue;
-            Maximum = maxValue;
-            Average = avgValue;
+            Minimum = minimum;
+            Maximum = maximum;
+            Average = average;
             SampleCount = sampleCount;
             Unit = unit;
         }
         /// <summary>ID uređaja, prvi dio MQTT topica.</summary>
         public string GatewayId { get; private set; }
-        /// <summary>ID signala, drugi dio MQTT topica.</summary>
+        /// <summary>Naziv signala iz poruke</summary>
         public string SignalName { get; private set; }
         /// <summary>Vrijeme početka minute u UTC-u.</summary>
         public DateTimeOffset Minute { get; private set; }
