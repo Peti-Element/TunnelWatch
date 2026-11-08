@@ -13,8 +13,10 @@ public sealed class MqttOptions
     /// <summary>Port brokera, standardno 1883.</summary>
     public int Port { get; set; } = 1883;
 
-    /// <summary>Prefiks topica, odnosno ID uređaja; pretplata ide na "{TopicPrefix}/#".</summary>
-    public string TopicPrefix { get; set; } = string.Empty;
+    /// <summary>
+    /// MQTT filter pretplate. Zadano "+/+/+": svi topici oblika {uređaj}/{port}/{profil}, za sve uređaje.
+    /// </summary>
+    public string TopicFilter { get; set; } = "+/+/+";
 
     /// <summary>Pauza između pokušaja spajanja kad broker nije dostupan.</summary>
     public int ReconnectDelaySeconds { get; set; } = 5;

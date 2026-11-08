@@ -1,6 +1,13 @@
 @TunnelWatch.Api_HostAddress = http://localhost:5161
 
-GET {{TunnelWatch.Api_HostAddress}}/weatherforecast/
+### Popis uređaja i vrijeme njihove zadnje poruke
+GET {{TunnelWatch.Api_HostAddress}}/api/gateways
 Accept: application/json
 
-###
+### Zadnje vrijednosti svih signala uređaja tdce-01
+GET {{TunnelWatch.Api_HostAddress}}/api/gateways/tdce-01/latest
+Accept: application/json
+
+### Uređaj bez podataka: očekuje se 404 "Nema podataka za uređaj"
+GET {{TunnelWatch.Api_HostAddress}}/api/gateways/nepostojeci/latest
+Accept: application/json
