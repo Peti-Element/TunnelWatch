@@ -23,5 +23,24 @@
         public DateTimeOffset Timestamp { get; private set; }
         /// <summary>Vrijednost signala.</summary>
         public double Value { get; private set; }
+
+        /// <summary>
+        /// Pokušava ažurirati zadnju poznatu vrijednost signala, ako je proslijeđeno vrijeme novije od prethodno zabilježenog vremena.
+        /// </summary>
+        /// <param name="unit"></param>
+        /// <param name="timestamp"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool UpdateIfNewer(string? unit, DateTimeOffset timestamp, double value)
+        {
+            if (timestamp > Timestamp)
+            {
+                Unit = unit;
+                Timestamp = timestamp;
+                Value = value;
+                return true;
+            }
+            return false;
+        }
     }
 }
