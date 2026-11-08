@@ -9,7 +9,6 @@ namespace TunnelWatch.Application.Signals
         /// </summary>
         /// <param name="signals"></param>
         /// <param name="cancellationToken"></param>
-        /// <returns></returns>
         Task StoreAsync(IReadOnlyList<MachineSignal> signals, CancellationToken cancellationToken);
     }
 }
