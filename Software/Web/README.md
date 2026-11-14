@@ -1,32 +1,73 @@
-# React + TypeScript + Vite
+# TunnelWatch Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Web application for the site manager: a list of machines and the latest values of their signals. Built with React, TypeScript and Vite; data comes from the TunnelWatch backend (`GET /api/gateways`, `GET /api/gateways/{id}/latest`).
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js (LTS) with npm
+- Running backend for live data (see `Software/Backend/README.md`)
 
-## React Compiler
+### Windows PowerShell
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+By default PowerShell blocks scripts, so `npm` fails with "running scripts is disabled on this system". Either:
 
-## Expanding the Oxlint configuration
+- allow local scripts once for your user (recommended):
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+- or use `npm.cmd` (and `npx.cmd`) instead of `npm` in every command:
+
+  ```powershell
+  npm.cmd install
+  npm.cmd run dev
+  ```
+
+In Command Prompt (`cmd`) `npm` works without any change.
+
+## Run
+
+In `Software/Web`:
+
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open http://localhost:5173.
+
+Requests to `/api` are forwarded by the Vite dev server to the local backend at http://localhost:5161 (see `vite.config.ts`), so the backend needs no CORS settings. Start the backend first:
+
+```bash
+cd ../Backend
+docker compose up -d
+dotnet run --project src/TunnelWatch.Api
+```
+
+## Routes
+
+| Route | Page |
+|---|---|
+| `/` | redirects to `/machines` |
+| `/machines` | list of machines |
+| `/machines/:id` | latest signal values of one machine |
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | development server with hot reload |
+| `npm run build` | type check and production build into `dist/` |
+| `npm run lint` | lint with Oxlint |
+| `npm run preview` | serve the production build locally |
+
+## Structure
+
+| Path | Content |
+|---|---|
+| `src/main.tsx` | entry point, router |
+| `src/App.tsx` | routes |
+| `src/components/` | shared components (layout) |
+| `src/pages/` | one component per route |
+| `vite.config.ts` | Vite config, `/api` proxy |
