@@ -1,14 +1,18 @@
-import { NavLink, Outlet } from 'react-router'
+import { Link, NavLink, Outlet } from 'react-router'
 
-/* Zajednički okvir svih stranica: zaglavlje s navigacijom, a ispod njega trenutna stranica. */
 function Layout() {
   return (
     <>
       <header className="app-header">
-        <span className="app-title">TunnelWatch</span>
-        <nav>
-          <NavLink to="/machines">Strojevi</NavLink>
-        </nav>
+        <div className="app-header-inner">
+          <Link to="/machines" className="brand">
+            <span className="brand-mark" aria-hidden="true">TW</span>
+            TunnelWatch
+          </Link>
+          <nav className="app-nav">
+            <NavLink to="/machines">Strojevi</NavLink>
+          </nav>
+        </div>
       </header>
       <main className="app-main">
         <Outlet />
