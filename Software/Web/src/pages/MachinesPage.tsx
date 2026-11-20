@@ -9,7 +9,7 @@ import { usePolling } from '../hooks/usePolling'
 type StatusFilter = 'all' | 'online' | 'offline'
 
 function MachinesPage() {
-  const { data: gateways, error, loading, lastUpdated } = usePolling(getGateways, 10_000)
+  const { data: gateways, error, loading, lastUpdated, retry } = usePolling(getGateways, 10_000)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
 
@@ -52,15 +52,19 @@ function MachinesPage() {
       {loading && <StateMessage>Učitavanje strojeva…</StateMessage>}
 
       {!loading && error !== undefined && gateways === undefined && (
-        <StateMessage kind="error">Backend nije dostupan. Provjeri je li pokrenut; pokušavam ponovno svakih 10 sekundi.</StateMessage>
+        <StateMessage kind="error" onRetry={retry}>
+          Poslužitelj nije dostupan.
+        </StateMessage>
       )}
 
       {!loading && error !== undefined && gateways !== undefined && (
-        <StateMessage kind="warning">Osvježavanje nije uspjelo, prikazani su zadnji dohvaćeni podaci.</StateMessage>
+        <StateMessage kind="warning" onRetry={retry}>
+          Osvježavanje nije uspjelo, prikazani su zadnji dohvaćeni podaci.
+        </StateMessage>
       )}
 
       {gateways !== undefined && gateways.length === 0 && (
-        <StateMessage>Još nijedan stroj nije poslao podatke.</StateMessage>
+        <StateMessage>Nema strojeva.</StateMessage>
       )}
 
       {gateways !== undefined && gateways.length > 0 && visible.length === 0 && (
@@ -88,7 +92,7 @@ function MachinesPage() {
                   <td>
                     <StatusBadge online={isOnline(gateway.lastMessageAt, now)} />
                   </td>
-                  <td className="muted">{formatDateTime(gateway.lastMessageAt, false, now)}</td>
+                  <td className="muted">{formatDateTime(gateway.lastMessageAt)}</td>
                 </tr>
               ))}
             </tbody>
