@@ -189,6 +189,15 @@ h1 {
   background: var(--surface-hover);
 }
 
+button.button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.state .button {
+  margin: 0;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -326,6 +335,11 @@ tbody tr:hover {
 }
 
 .state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 16px;
   padding: 12px 16px;
   border: 1px solid var(--border);
