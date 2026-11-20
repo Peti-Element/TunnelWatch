@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import { getLatestSignals, NotFoundError } from '../api/gateways'
 import StateMessage from '../components/StateMessage'
 import StatusBadge from '../components/StatusBadge'
-import { formatDateTime, formatValue, isOnline } from '../format'
+import { formatDateTime, formatTime, formatValue, isOnline } from '../format'
 import { usePolling } from '../hooks/usePolling'
 
 const REFRESH_MS = 10_000
@@ -21,7 +21,7 @@ function MachineDetailPage() {
   const { id = '' } = useParams<{ id: string }>()
 
   const load = useCallback((signal: AbortSignal) => getLatestSignals(id, signal), [id])
-  const { data: signals, error, loading, lastUpdated } = usePolling(load, REFRESH_MS)
+  const { data: signals, error, loading, lastUpdated, retry } = usePolling(load, REFRESH_MS)
 
   const notFound = error instanceof NotFoundError
   const hasSignals = signals !== undefined && signals.length > 0 && !notFound
@@ -43,21 +43,25 @@ function MachineDetailPage() {
         </div>
         {lastUpdated && (
           <p className={`refresh-info ${error === undefined ? 'refresh-ok' : 'refresh-failed'}`}>
-            Osvježeno {lastUpdated.toLocaleTimeString()}
+            Osvježeno {formatTime(lastUpdated)}
           </p>
         )}
       </div>
 
       {loading && <StateMessage>Učitavanje signala…</StateMessage>}
 
-      {!loading && notFound && <StateMessage>Nema podataka za uređaj {id}.</StateMessage>}
+      {!loading && notFound && <StateMessage>Nema podataka za stroj {id}.</StateMessage>}
 
       {!loading && error !== undefined && !notFound && signals === undefined && (
-        <StateMessage kind="error">Backend nije dostupan. Provjeri je li pokrenut; pokušavam ponovno svakih 10 sekundi.</StateMessage>
+        <StateMessage kind="error" onRetry={retry}>
+          Poslužitelj nije dostupan.
+        </StateMessage>
       )}
 
       {!loading && error !== undefined && !notFound && signals !== undefined && (
-        <StateMessage kind="warning">Osvježavanje nije uspjelo, prikazani su zadnji dohvaćeni podaci.</StateMessage>
+        <StateMessage kind="warning" onRetry={retry}>
+          Osvježavanje nije uspjelo, prikazani su zadnji dohvaćeni podaci.
+        </StateMessage>
       )}
 
       {hasSignals && (
@@ -67,19 +71,22 @@ function MachineDetailPage() {
               <tr>
                 <th>Signal</th>
                 <th className="numeric">Vrijednost</th>
+                <th>Jedinica</th>
                 <th className="desktop-only">Vrijeme očitanja</th>
               </tr>
             </thead>
             <tbody>
               {signals.map((signal) => {
-                const time = formatDateTime(signal.timestamp, true, lastUpdated)
+                const time = formatDateTime(signal.timestamp)
                 return (
                   <tr key={signal.name}>
                     <td>
                       <span className="signal-name">{breakableName(signal.name)}</span>
                       <span className="mobile-only muted">{time}</span>
                     </td>
-                    <td className="numeric value">{formatValue(signal.value, signal.unit)}</td>
+                    <td className="numeric value">{formatValue(signal.value)}</td>
+                    {/* Signali bez jedinice imaju praznu ćeliju, bez "null" ili praznih zagrada. */}
+                    <td className="muted">{signal.unit ?? ''}</td>
                     <td className="muted desktop-only">{time}</td>
                   </tr>
                 )
