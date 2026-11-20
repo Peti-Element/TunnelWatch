@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { getGateways } from '../api/gateways'
 import StateMessage from '../components/StateMessage'
+import StatusBadge from '../components/StatusBadge'
 import { formatDateTime, isOnline } from '../format'
 import { usePolling } from '../hooks/usePolling'
 
@@ -22,8 +23,12 @@ function MachinesPage() {
 
   return (
     <section>
-      <h1>Strojevi</h1>
-      <p className="subtitle">Pregled svih strojeva i vremena njihove zadnje poruke.</p>
+      <div className="page-header">
+        <div>
+          <h1>Strojevi</h1>
+          <p className="subtitle">Pregled svih strojeva i vremena njihove zadnje poruke.</p>
+        </div>
+      </div>
 
       <div className="toolbar">
         <input
@@ -63,7 +68,7 @@ function MachinesPage() {
       )}
 
       {visible.length > 0 && (
-        <div className="table-wrapper">
+        <div className="card table-wrapper">
           <table>
             <thead>
               <tr>
@@ -73,24 +78,19 @@ function MachinesPage() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((gateway) => {
-                const online = isOnline(gateway.lastMessageAt, now)
-                return (
-                  <tr key={gateway.id}>
-                    <td>
-                      <Link className="machine-link" to={`/machines/${encodeURIComponent(gateway.id)}`}>
-                        {gateway.id}
-                      </Link>
-                    </td>
-                    <td>
-                      <span className={`status status-${online ? 'online' : 'offline'}`}>
-                        {online ? 'Online' : 'Offline'}
-                      </span>
-                    </td>
-                    <td>{formatDateTime(gateway.lastMessageAt, false, now)}</td>
-                  </tr>
-                )
-              })}
+              {visible.map((gateway) => (
+                <tr key={gateway.id} className="clickable-row">
+                  <td>
+                    <Link className="row-link" to={`/machines/${encodeURIComponent(gateway.id)}`}>
+                      {gateway.id}
+                    </Link>
+                  </td>
+                  <td>
+                    <StatusBadge online={isOnline(gateway.lastMessageAt, now)} />
+                  </td>
+                  <td className="muted">{formatDateTime(gateway.lastMessageAt, false, now)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
