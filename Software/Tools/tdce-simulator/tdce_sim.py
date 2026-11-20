@@ -1,5 +1,9 @@
-import json, time
+import json, time, argparse
+import paho.mqtt.client as mqtt
+import paho.mqtt.enums as mqtt_enums
 
+PORT = "can0"
+PROFILE = "j1939-default"
 
 CATALOG = {
  217056256: {'drivers_demand_engine_percent_torque': '%',
@@ -44,7 +48,36 @@ def build_payload(values, now_ms):
         messages.append({"id": can_id, "timestamp": now_ms, "signals": body})
     return {"version": 1, "port": "can0", "profile": "j1939-default", "messages": messages}
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Simulira TDC-E: šalje CAN App poruke na MQTT broker.")
+    parser.add_argument("--broker", default="127.0.0.1", help="adresa MQTT brokera (default 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=1883, help="port MQTT brokera (default 1883)")
+    parser.add_argument("--prefix", default="tdce-sim", help="prvi dio topica, tj. ID uređaja (default tdce-sim)")
+    parser.add_argument("--scenario", choices=["drill-rig", "truck"], default="drill-rig",
+                        help="drill-rig stoji na mjestu, truck u fazi rada vozi (default drill-rig)")
+    parser.add_argument("--fault", choices=["none", "overheat", "low-oil", "low-fuel"], default="none",
+                        help="kvar za testiranje alarma (default none)")
+    parser.add_argument("--fault-after", type=float, default=30,
+                        help="nakon koliko sekundi kvar počinje (default 30)")
+    parser.add_argument("--interval", type=float, default=1.0,
+                        help="sekunde između dva payloada (default 1.0)")
+    parser.add_argument("--duration", type=float, default=0,
+                        help="koliko sekundi slati, 0 = dok se ne prekine s Ctrl+C (default 0)")
+    args = parser.parse_args()
+
+    # Backend prihvaća samo topic od točno tri dijela
+    if not args.prefix.strip() or any(ch in args.prefix for ch in "/+#"):
+        parser.error("--prefix ne smije biti prazan ni sadržavati '/', '+' ili '#'")
+    if args.interval <= 0:
+        parser.error("--interval mora biti veći od 0")
+    if args.fault_after < 0:
+        parser.error("--fault-after ne smije biti negativan")
+    return args
+
 def main():
+    args = parse_args()
+    topic = f"{args.prefix}/{PORT}/{PROFILE}" # npr. "tdce/can0/j1939-default"
+
     # Primjer korištenja funkcije build_payload
     values = {
         'drivers_demand_engine_percent_torque': 50,
@@ -77,9 +110,16 @@ def main():
         'total_idle_hours': 1000,
         'engine_reference_torque': 400
     }
-    now_ms = int(time.time() * 1000)
-    payload = build_payload(values, now_ms)
-    print(payload)
+    payload = build_payload(values, int(time.time() * 1000))
+    text = json.dumps(payload, separators=(",", ":"))
+    client = mqtt.Client(mqtt_enums.CallbackAPIVersion.VERSION2) 
+    client.connect(args.broker, args.port)
+    client.loop_start()
+    info = client.publish(topic, text)
+    info.wait_for_publish()
+    client.loop_stop()
+    client.disconnect()
+    print(f"Poslano na {topic}")
 
 if __name__ == "__main__":
     main()
