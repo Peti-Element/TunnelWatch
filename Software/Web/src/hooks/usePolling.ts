@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export type PollingState<T> = {
   data: T | undefined
@@ -11,8 +11,10 @@ const initialState = { data: undefined, error: undefined, loading: true, lastUpd
 
 type Load<T> = (signal: AbortSignal) => Promise<T>
 
-export function usePolling<T>(load: Load<T>, intervalMs: number): PollingState<T> {
+export function usePolling<T>(load: Load<T>, intervalMs: number): PollingState<T> & { retry: () => void } {
   const [state, setState] = useState<PollingState<T> & { source: Load<T> }>({ ...initialState, source: load })
+  const [attempt, setAttempt] = useState(0)
+  const retry = useCallback(() => setAttempt((value) => value + 1), [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -45,7 +47,7 @@ export function usePolling<T>(load: Load<T>, intervalMs: number): PollingState<T
       controller.abort()
       window.clearTimeout(timer)
     }
-  }, [load, intervalMs])
+    }, [load, intervalMs, attempt])
 
-  return state.source === load ? state : initialState
+  return { ...(state.source === load ? state : initialState), retry }
 }
