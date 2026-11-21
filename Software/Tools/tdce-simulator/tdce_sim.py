@@ -110,16 +110,31 @@ def main():
         'total_idle_hours': 1000,
         'engine_reference_torque': 400
     }
-    payload = build_payload(values, int(time.time() * 1000))
-    text = json.dumps(payload, separators=(",", ":"))
-    client = mqtt.Client(mqtt_enums.CallbackAPIVersion.VERSION2) 
+    client = mqtt.Client(mqtt_enums.CallbackAPIVersion.VERSION2)
     client.connect(args.broker, args.port)
     client.loop_start()
-    info = client.publish(topic, text)
-    info.wait_for_publish()
-    client.loop_stop()
-    client.disconnect()
-    print(f"Poslano na {topic}")
+    print(f"Saljem na {topic} svakih {args.interval} s. Ctrl+C za kraj.")
+
+    start = time.monotonic()    # mjeri proteklo vrijeme tkd ne ovisi o satu računala
+    next_tick = start
+    try:
+        while True:
+            elapsed = time.monotonic() - start
+            if args.duration and elapsed >= args.duration:
+                break
+
+            payload = build_payload(values, int(time.time() * 1000))
+            client.publish(topic, json.dumps(payload, separators=(",", ":")))
+            print(f"{elapsed:5.0f}s poslano, rpm={values['engine_speed']}")
+
+            # čekaj do sljedećeg takta; sleep(interval) bi polako kasnio zbog vremena slanja
+            next_tick += args.interval
+            time.sleep(max(0, next_tick - time.monotonic()))
+    except KeyboardInterrupt:
+        print("Zaustavljeno.")
+    finally:
+        client.loop_stop()
+        client.disconnect()
 
 if __name__ == "__main__":
     main()
