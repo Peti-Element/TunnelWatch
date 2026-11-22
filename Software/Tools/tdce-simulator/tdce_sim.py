@@ -46,7 +46,7 @@ def approach(current, target, factor):
     # Pomakni current prema target za neki factor
     return current + (target - current) * factor
 
-def update(state, elapsed, dt):
+def update(state, elapsed, dt, args):
     """Izračuna novo stanje. elapsed = s od starta, dt = s od prošlog takta. Vraća True ako stroj radi."""
     working = int(elapsed // PHASE_SECONDS) % 2 == 1
     for name, goal in (WORK if working else IDLE).items():
@@ -55,18 +55,59 @@ def update(state, elapsed, dt):
     state["engine_speed"] += random.uniform(-2, 2)  # malo šuma da nije ravna crta
 
     # Motor se polako zagrijava prema radnoj temperaturi.
-    state["engine_coolant_temperature"] = approach(state["engine_coolant_temperature"], 88, 0.01)
+    overheating = args.fault == "overheat" and elapsed >= args.fault_after
+    if not overheating:
+        state["engine_coolant_temperature"] = approach(state["engine_coolant_temperature"], 88, 0.01)
     state["engine_oil_temperature"] = approach(state["engine_oil_temperature"], 95, 0.01)
 
     # Potrošnja ovisi o opterećenju: ~6 L/h u praznom hodu, ~27 L/h u radu.
-    litres = (2 + 0.4 * state["engine_percent_load_at_current_speed"]) * dt / 3600
+    rate = 2 + 0.4 * state["engine_percent_load_at_current_speed"]   # L/h
+    litres = rate * dt / 3600
     state["engine_total_hours_of_operation"] += dt / 3600
     state["engine_total_fuel_used"] += litres
     state["fuel_level"] -= litres / 400 * 100  # spremnik od 400 L
     if not working:
         state["total_idle_hours"] += dt / 3600
         state["total_idel_fuel_used"] += litres
+
+    # Vožnja: samo truck u fazi rada, drill-rig stoji na mjestu.
+    driving = args.scenario == "truck" and working
+    target_speed = 40 if driving else 0
+    state["wheelbased_vehicle_speed"] = approach(state["wheelbased_vehicle_speed"], target_speed, 0.1)
+    if state["wheelbased_vehicle_speed"] < 0.5:
+        state["wheelbased_vehicle_speed"] = 0   # približavanje nikad ne dođe do točne nule
+    speed = state["wheelbased_vehicle_speed"]
+
+    target_pedal = 40 if driving else 0
+    state["accelerator_pedal_position"] = approach(state["accelerator_pedal_position"], target_pedal, 0.3)
+
+    if speed > 0:
+        state["currentgear"] = min(6, 1 + int(speed // 8))
+        state["parking_brake_switch"] = 0
+        state["instantaneous_fuel_economy"] = speed / rate # km/L
+    else:
+        state["currentgear"] = 0
+        state["parking_brake_switch"] = 1
+        state["instantaneous_fuel_economy"] = 0
+    state["total_vehicle_distance"] += speed / 3.6 * dt # km/h u m/s, puta sekunde
+
+    apply_fault(state, elapsed, dt, args)
     return working
+
+def apply_fault(state, elapsed, dt, args):
+    """Kvar za testiranje alarma. Ide zadnji, pa nadjača normalno ponašanje."""
+    if args.fault == "none" or elapsed < args.fault_after:
+        return
+
+    if args.fault == "overheat":
+        new_temp = state["engine_coolant_temperature"] + 1 * dt     # +1 °C u sekundi
+        state["engine_coolant_temperature"] = min(new_temp, 110)
+    elif args.fault == "low-oil":
+        new_pressure = state["engine_oil_pressure"] - 15 * dt       # pada ispod 100 kPa
+        state["engine_oil_pressure"] = max(new_pressure, 60)
+    elif args.fault == "low-fuel":
+        new_level = state["fuel_level"] - 2 * dt                    # pada ispod 10 %
+        state["fuel_level"] = max(new_level, 5)
 
 # Gradi payload u obliku JSON-a koji sadrži sve CAN ID-jeve i signale iz globalnog kataloga CATALOG, zajedno s njihovim vrijednostima i jedinicama.
 def build_payload(values, now_ms):
@@ -117,11 +158,11 @@ def main():
         'drivers_demand_engine_percent_torque': 50,
         'engine_speed': 2000,
         'parking_brake_switch': 1,
-        'wheelbased_vehicle_speed': 80,
-        'instantaneous_fuel_economy': 15.5,
-        'accelerator_pedal_position': 30,
+        'wheelbased_vehicle_speed': 0,
+        'instantaneous_fuel_economy': 0,
+        'accelerator_pedal_position': 0,
         'engine_percent_load_at_current_speed': 70,
-        'currentgear': 4,
+        'currentgear': 0,
         'actual_retarder_percent_torque': 20,
         'engine_coolant_level': 75,
         'engine_coolant_pressure': 120,
@@ -161,14 +202,16 @@ def main():
             if args.duration and elapsed >= args.duration:
                 break
 
-            working = update(state, elapsed, dt)
+            working = update(state, elapsed, dt, args)
             sent = {name: round(value, 2) for name, value in state.items()}
             payload = build_payload(sent, int(time.time() * 1000))
             client.publish(topic, json.dumps(payload, separators=(",", ":")))
             print(f"{elapsed:5.0f}s {'rad ' if working else 'idle'} "
                 f"rpm={sent['engine_speed']:.0f} load={sent['engine_percent_load_at_current_speed']:.0f}% "
-                f"hours={sent['engine_total_hours_of_operation']} fuel={sent['engine_total_fuel_used']}")
-
+                f"hours={sent['engine_total_hours_of_operation']} fuel={sent['engine_total_fuel_used']}"
+                f"speed={sent['wheelbased_vehicle_speed']:.0f} gear={sent['currentgear']} brake={sent['parking_brake_switch']} "
+                f"coolant={sent['engine_coolant_temperature']:.0f} oil={sent['engine_oil_pressure']:.0f} fuel%={sent['fuel_level']}"
+            ) 
             # čekaj do sljedećeg takta; sleep(interval) bi polako kasnio zbog vremena slanja
             next_tick += args.interval
             time.sleep(max(0, next_tick - time.monotonic()))
