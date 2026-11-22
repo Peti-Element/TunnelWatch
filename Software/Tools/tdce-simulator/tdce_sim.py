@@ -1,3 +1,4 @@
+import sys
 import json, time, argparse, random
 import paho.mqtt.client as mqtt
 import paho.mqtt.enums as mqtt_enums
@@ -186,7 +187,13 @@ def main():
         'engine_reference_torque': 400
     }
     client = mqtt.Client(mqtt_enums.CallbackAPIVersion.VERSION2)
-    client.connect(args.broker, args.port)
+
+    try: # da pomognem kolegama koji nisu pokrenuli broker, a pokušavaju se spojiti na njega >:3
+        client.connect(args.broker, args.port)
+    except OSError as error:
+        sys.exit(f"Ne mogu se spojiti na {args.broker}:{args.port} ({error}). "
+                "Jesi pokrenuo broker? U Software/Backend: docker compose up -d")
+        
     client.loop_start()
     print(f"Saljem na {topic} svakih {args.interval} s. Ctrl+C za kraj.")
 
