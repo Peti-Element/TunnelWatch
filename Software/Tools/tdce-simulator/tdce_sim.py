@@ -1,4 +1,4 @@
-import json, time, argparse
+import json, time, argparse, random
 import paho.mqtt.client as mqtt
 import paho.mqtt.enums as mqtt_enums
 
@@ -33,6 +33,40 @@ CATALOG = {
  419355648: {'total_idel_fuel_used': 'L', 'total_idle_hours': 'h'},
  419357440: {"engine_reference_torque": "Nm"}, # nedostajao je u device-truck.txt, dodan je u katalog da bi simulator mogao slati reference torque
 }
+
+# Stroj naizmjence 60 s stoji u praznom hodu, pa 60 s radi.
+PHASE_SECONDS = 60
+IDLE = {"engine_speed": 770, "engine_percent_load_at_current_speed": 10,
+        "drivers_demand_engine_percent_torque": 9, "exhaust_gas_temperature": 150}
+WORK = {"engine_speed": 1800, "engine_percent_load_at_current_speed": 63,
+        "drivers_demand_engine_percent_torque": 59, "exhaust_gas_temperature": 380}
+
+
+def approach(current, target, factor):
+    # Pomakni current prema target za neki factor
+    return current + (target - current) * factor
+
+def update(state, elapsed, dt):
+    """Izračuna novo stanje. elapsed = s od starta, dt = s od prošlog takta. Vraća True ako stroj radi."""
+    working = int(elapsed // PHASE_SECONDS) % 2 == 1
+    for name, goal in (WORK if working else IDLE).items():
+        factor = 0.05 if name == "exhaust_gas_temperature" else 0.15
+        state[name] = approach(state[name], goal, factor)
+    state["engine_speed"] += random.uniform(-2, 2)  # malo šuma da nije ravna crta
+
+    # Motor se polako zagrijava prema radnoj temperaturi.
+    state["engine_coolant_temperature"] = approach(state["engine_coolant_temperature"], 88, 0.01)
+    state["engine_oil_temperature"] = approach(state["engine_oil_temperature"], 95, 0.01)
+
+    # Potrošnja ovisi o opterećenju: ~6 L/h u praznom hodu, ~27 L/h u radu.
+    litres = (2 + 0.4 * state["engine_percent_load_at_current_speed"]) * dt / 3600
+    state["engine_total_hours_of_operation"] += dt / 3600
+    state["engine_total_fuel_used"] += litres
+    state["fuel_level"] -= litres / 400 * 100  # spremnik od 400 L
+    if not working:
+        state["total_idle_hours"] += dt / 3600
+        state["total_idel_fuel_used"] += litres
+    return working
 
 # Gradi payload u obliku JSON-a koji sadrži sve CAN ID-jeve i signale iz globalnog kataloga CATALOG, zajedno s njihovim vrijednostima i jedinicama.
 def build_payload(values, now_ms):
@@ -78,7 +112,7 @@ def main():
     args = parse_args()
     topic = f"{args.prefix}/{PORT}/{PROFILE}" # npr. "tdce/can0/j1939-default"
 
-    # Primjer korištenja funkcije build_payload
+    # Početne vrijednosti signala. Ove vrijednosti se mijenjaju u update() funkciji.
     values = {
         'drivers_demand_engine_percent_torque': 50,
         'engine_speed': 2000,
@@ -115,17 +149,25 @@ def main():
     client.loop_start()
     print(f"Saljem na {topic} svakih {args.interval} s. Ctrl+C za kraj.")
 
+    state = dict(values) # početno stanje, koje se mijenja u update() funkciji
     start = time.monotonic()    # mjeri proteklo vrijeme tkd ne ovisi o satu računala
-    next_tick = start
+    next_tick = last = start 
     try:
         while True:
-            elapsed = time.monotonic() - start
+            now = time.monotonic() 
+            elapsed = now - start
+            dt = now - last
+            last = now
             if args.duration and elapsed >= args.duration:
                 break
 
-            payload = build_payload(values, int(time.time() * 1000))
+            working = update(state, elapsed, dt)
+            sent = {name: round(value, 2) for name, value in state.items()}
+            payload = build_payload(sent, int(time.time() * 1000))
             client.publish(topic, json.dumps(payload, separators=(",", ":")))
-            print(f"{elapsed:5.0f}s poslano, rpm={values['engine_speed']}")
+            print(f"{elapsed:5.0f}s {'rad ' if working else 'idle'} "
+                f"rpm={sent['engine_speed']:.0f} load={sent['engine_percent_load_at_current_speed']:.0f}% "
+                f"hours={sent['engine_total_hours_of_operation']} fuel={sent['engine_total_fuel_used']}")
 
             # čekaj do sljedećeg takta; sleep(interval) bi polako kasnio zbog vremena slanja
             next_tick += args.interval
