@@ -50,4 +50,11 @@ class SettingsViewModelTest {
         vm.setLoremWords(500)
         assertEquals(200, vm.settings.value.loremWords)
     }
+
+    @Test
+    fun `changing accent color updates state`() {
+        vm.setAccentColor(AccentColor.ROSE)
+
+        assertEquals(AccentColor.ROSE, vm.settings.value.accentColor)
+    }
 }
