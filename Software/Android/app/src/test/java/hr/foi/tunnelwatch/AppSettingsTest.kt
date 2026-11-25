@@ -38,4 +38,15 @@ class AppSettingsTest {
 
         assertTrue(settings.useDarkTheme(systemIsDark = false))
     }
+
+    @Test
+    fun `phase 2 defaults show everything in the default style`() {
+        val settings = AppSettings()
+
+        assertEquals(AccentColor.TEAL, settings.accentColor)
+        assertEquals(TableDensity.COMFORTABLE, settings.tableDensity)
+        assertEquals(setOf("id", "name", "status", "date", "amount"), settings.visibleColumns)
+        assertTrue(settings.showFiller)
+        assertTrue(settings.showTable)
+    }
 }
