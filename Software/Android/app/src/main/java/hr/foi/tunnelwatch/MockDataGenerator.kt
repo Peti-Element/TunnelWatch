@@ -21,9 +21,15 @@ class MockDataGenerator(private val seed: Long) {
         return MockTable(HEADERS, rows)
     }
 
+    fun paragraph(wordCount: Int): String {
+        val random = Random(seed)
+        return List(wordCount) { WORDS.random(random) }.joinToString(" ")
+    }
+
     companion object {
         val HEADERS = listOf("id", "name", "status", "date", "amount")
         private val NAMES = listOf("Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot")
         private val STATUSES = listOf("Active", "Pending", "Closed", "Failed")
+        private val WORDS = listOf("lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit")
     }
 }

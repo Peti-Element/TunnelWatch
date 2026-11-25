@@ -27,6 +27,6 @@ class MockDataGeneratorTest {
         assertEquals(a, b)
     }
 
-    
+
 
 }
