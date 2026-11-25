@@ -8,4 +8,6 @@ interface SettingsRepository {
     suspend fun setFontScale(scale: Float)
     suspend fun setMockRowCount(count: Int)
     suspend fun setLoremWords(words: Int)
+    suspend fun setAccentColor(color: AccentColor)
+    suspend fun setTableDensity(density: TableDensity)
 }

@@ -26,4 +26,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun setLoremWords(words: Int) {
         viewModelScope.launch { repo.setLoremWords(words.coerceIn(5, 200)) }
     }
+    fun setAccentColor(color: AccentColor) {
+        viewModelScope.launch { repo.setAccentColor(color) }
+    }
 }

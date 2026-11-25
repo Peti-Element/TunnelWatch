@@ -12,17 +12,23 @@ class DataStoreSettingsRepository(
     private val store: DataStore<Preferences>
 ) : SettingsRepository {
     private val THEME = stringPreferencesKey("theme_mode")
+    private val DENSITY = stringPreferencesKey("table_density")
     private val FONT_SCALE = floatPreferencesKey("font_scale")
     private val MOCK_ROWS = intPreferencesKey("mock_row_count")
     private val LOREM_WORDS = intPreferencesKey("lorem_words")
+    private val ACCENT = stringPreferencesKey("accent_color")
 
     override val settings = store.data.map { p ->
         AppSettings(
             themeMode = p[THEME]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: ThemeMode.SYSTEM,
             fontScale = p[FONT_SCALE] ?: 1.0f,
+            tableDensity = p[DENSITY]?.let { runCatching { TableDensity.valueOf(it) }.getOrNull() }
+                ?: TableDensity.COMFORTABLE,
             mockRowCount = p[MOCK_ROWS] ?: 10,
             loremWords = p[LOREM_WORDS] ?: 30,
+            accentColor = p[ACCENT]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() }
+                ?: AccentColor.TEAL,
         )
     }
 
@@ -30,4 +36,6 @@ class DataStoreSettingsRepository(
     override suspend fun setFontScale(scale: Float) { store.edit { it[FONT_SCALE] = scale } }
     override suspend fun setMockRowCount(count: Int) { store.edit { it[MOCK_ROWS] = count } }
     override suspend fun setLoremWords(words: Int) { store.edit { it[LOREM_WORDS] = words } }
+    override suspend fun setAccentColor(color: AccentColor) { store.edit { it[ACCENT] = color.name } }
+    override suspend fun setTableDensity(density: TableDensity) { store.edit { it[DENSITY] = density.name } }
 }
