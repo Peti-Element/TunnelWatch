@@ -3,7 +3,16 @@ package hr.foi.tunnelwatch
 import java.util.Locale
 import kotlin.random.Random
 
-data class MockTable(val headers: List<String>, val rows: List<List<String>>)
+data class MockTable(val headers: List<String>, val rows: List<List<String>>) {
+
+    fun onlyColumns(visible: Set<String>): MockTable {
+        val keep = headers.indices.filter { headers[it] in visible }
+        return MockTable(
+            headers = keep.map { headers[it] },
+            rows = rows.map { row -> keep.map { row[it] } },
+        )
+    }
+}
 
 class MockDataGenerator(private val seed: Long) {
 
