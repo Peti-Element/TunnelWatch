@@ -15,6 +15,7 @@ class DataStoreSettingsRepository(
     private val FONT_SCALE = floatPreferencesKey("font_scale")
     private val MOCK_ROWS = intPreferencesKey("mock_row_count")
     private val LOREM_WORDS = intPreferencesKey("lorem_words")
+    private val ACCENT = stringPreferencesKey("accent_color")
 
     override val settings = store.data.map { p ->
         AppSettings(
@@ -23,6 +24,8 @@ class DataStoreSettingsRepository(
             fontScale = p[FONT_SCALE] ?: 1.0f,
             mockRowCount = p[MOCK_ROWS] ?: 10,
             loremWords = p[LOREM_WORDS] ?: 30,
+            accentColor = p[ACCENT]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() }
+                ?: AccentColor.TEAL,
         )
     }
 
@@ -30,4 +33,5 @@ class DataStoreSettingsRepository(
     override suspend fun setFontScale(scale: Float) { store.edit { it[FONT_SCALE] = scale } }
     override suspend fun setMockRowCount(count: Int) { store.edit { it[MOCK_ROWS] = count } }
     override suspend fun setLoremWords(words: Int) { store.edit { it[LOREM_WORDS] = words } }
+    override suspend fun setAccentColor(color: AccentColor) { store.edit { it[ACCENT] = color.name } }
 }
