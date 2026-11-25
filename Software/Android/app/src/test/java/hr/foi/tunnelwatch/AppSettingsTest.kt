@@ -1,15 +1,41 @@
 package hr.foi.tunnelwatch
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppSettingsTest {
 
     @Test
-    fun `defaults are system theme and normal font size`() {
+    fun `defaults are system theme, normal font size, 10 rows and 30 words`() {
         val settings = AppSettings()
 
         assertEquals(ThemeMode.SYSTEM, settings.themeMode)
         assertEquals(1.0f, settings.fontScale, 0.0f)
+        assertEquals(10, settings.mockRowCount)
+        assertEquals(30, settings.loremWords)
+    }
+
+    @Test
+    fun `SYSTEM theme follows the device setting`() {
+        val settings = AppSettings(themeMode = ThemeMode.SYSTEM)
+
+        assertTrue(settings.useDarkTheme(systemIsDark = true))
+        assertFalse(settings.useDarkTheme(systemIsDark = false))
+    }
+
+    @Test
+    fun `LIGHT theme is never dark`() {
+        val settings = AppSettings(themeMode = ThemeMode.LIGHT)
+
+        assertFalse(settings.useDarkTheme(systemIsDark = true))
+    }
+
+    @Test
+    fun `DARK theme is always dark`() {
+        val settings = AppSettings(themeMode = ThemeMode.DARK)
+
+        assertTrue(settings.useDarkTheme(systemIsDark = false))
     }
 }
