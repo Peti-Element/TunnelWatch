@@ -13,4 +13,5 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setMockRowCount(count: Int) = state.update { it.copy(mockRowCount = count) }
     override suspend fun setLoremWords(words: Int) = state.update { it.copy(loremWords = words) }
     override suspend fun setAccentColor(color: AccentColor) = state.update { it.copy(accentColor = color) }
+    override suspend fun setTableDensity(density: TableDensity) = state.update { it.copy(tableDensity = density) }
 }
