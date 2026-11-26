@@ -22,6 +22,64 @@ namespace TunnelWatch.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("TunnelWatch.Domain.Alarms.AlarmRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_seconds");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("GatewayId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("gateway_id");
+
+                    b.Property<double>("Hysteresis")
+                        .HasColumnType("double precision")
+                        .HasColumnName("hysteresis");
+
+                    b.Property<string>("Operator")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("operator");
+
+                    b.Property<int>("RepeatSuppressionSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("repeat_suppression_seconds");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("severity");
+
+                    b.Property<string>("SignalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("signal_name");
+
+                    b.Property<double>("Threshold")
+                        .HasColumnType("double precision")
+                        .HasColumnName("threshold");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("alarm_rules", (string)null);
+                });
+
             modelBuilder.Entity("TunnelWatch.Domain.Gateways.Gateway", b =>
                 {
                     b.Property<string>("Id")
