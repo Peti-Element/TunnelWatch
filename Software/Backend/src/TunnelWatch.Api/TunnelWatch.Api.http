@@ -11,3 +11,57 @@ Accept: application/json
 ### Uređaj bez podataka: očekuje se 404 "Nema podataka za uređaj"
 GET {{TunnelWatch.Api_HostAddress}}/api/gateways/nepostojeci/latest
 Accept: application/json
+
+### Popis pravila alarma
+GET {{TunnelWatch.Api_HostAddress}}/api/rules
+Accept: application/json
+
+### Novo pravilo: temperatura rashladne tekućine > 95 °C dulje od 10 s, kritično
+POST {{TunnelWatch.Api_HostAddress}}/api/rules
+Content-Type: application/json
+
+{
+  "gatewayId": "tdce-01",
+  "signalName": "engine_coolant_temperature",
+  "operator": ">",
+  "threshold": 95,
+  "durationSeconds": 10,
+  "hysteresis": 3,
+  "severity": "Critical",
+  "repeatSuppressionSeconds": 300,
+  "enabled": true
+}
+
+### Isključivanje pravila 1 (PUT šalje cijelo pravilo)
+PUT {{TunnelWatch.Api_HostAddress}}/api/rules/1
+Content-Type: application/json
+
+{
+  "gatewayId": "tdce-01",
+  "signalName": "engine_coolant_temperature",
+  "operator": ">",
+  "threshold": 95,
+  "durationSeconds": 10,
+  "hysteresis": 3,
+  "severity": "Critical",
+  "repeatSuppressionSeconds": 300,
+  "enabled": false
+}
+
+### Neispravno pravilo: nepoznat operator i negativno trajanje, očekuje se 400
+POST {{TunnelWatch.Api_HostAddress}}/api/rules
+Content-Type: application/json
+
+{
+  "gatewayId": "tdce-01",
+  "signalName": "engine_coolant_temperature",
+  "operator": "==",
+  "threshold": 95,
+  "durationSeconds": -10,
+  "hysteresis": 3,
+  "severity": "Critical",
+  "repeatSuppressionSeconds": 300
+}
+
+### Brisanje pravila 1
+DELETE {{TunnelWatch.Api_HostAddress}}/api/rules/1
