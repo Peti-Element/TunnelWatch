@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TunnelWatch.Domain.Gateways;
 using TunnelWatch.Domain.Signals;
+using TunnelWatch.Domain.Alarms;
 
 namespace TunnelWatch.Infrastructure.Persistence
 {
@@ -12,6 +13,7 @@ namespace TunnelWatch.Infrastructure.Persistence
         public DbSet<Gateway> Gateways => Set<Gateway>();
         public DbSet<LatestSignalValue> LatestSignalValues => Set<LatestSignalValue>();
         public DbSet<SignalMinuteHistory> SignalMinuteHistories => Set<SignalMinuteHistory>();
+        public DbSet<AlarmRule> AlarmRules => Set<AlarmRule>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(TunnelWatchDbContext).Assembly);

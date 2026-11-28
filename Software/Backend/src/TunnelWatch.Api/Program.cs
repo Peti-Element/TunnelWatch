@@ -3,6 +3,8 @@ using TunnelWatch.Application.Signals;
 using TunnelWatch.Infrastructure.Mqtt;
 using TunnelWatch.Infrastructure.Persistence;
 using TunnelWatch.Application.Gateways;
+using System.Text.Json.Serialization;
+using TunnelWatch.Application.Alarms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,18 +13,20 @@ var builder = WebApplication.CreateBuilder(args);
 // MQTT: postavke iz sekcije "Mqtt", parser poruka i pozadinska pretplata na broker.
 builder.Services.AddOptions<MqttOptions>()
     .Bind(builder.Configuration.GetSection(MqttOptions.SectionName))
-    .Validate(o => !string.IsNullOrWhiteSpace(o.Host) && o.Port > 0 && !string.IsNullOrWhiteSpace(o.TopicFilter),
-        "Sekcija 'Mqtt' mora imati Host, Port i TopicFilter.")
+    .Validate(o => !string.IsNullOrWhiteSpace(o.Host) && o.Port > 0 && !string.IsNullOrWhiteSpace(o.TopicFilter), "Sekcija 'Mqtt' mora imati Host, Port i TopicFilter.")
     .ValidateOnStart();
 builder.Services.AddSingleton<IMachineMessageParser, MachineMessageParser>();
 builder.Services.AddHostedService<MqttSubscriptionService>();
 
-builder.Services.AddDbContext<TunnelWatchDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddDbContext<TunnelWatchDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<IMachineSignalStore, MachineSignalStore>();
 builder.Services.AddScoped<IGatewayQueries, GatewayQueries>();
+builder.Services.AddScoped<IAlarmRuleRepository, AlarmRuleRepository>();
 
-builder.Services.AddControllers();
+// Enumi u JSON-u kao tekst ("Critical", ">"), a ne kao brojevi.
+builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));
+// Iste postavke za OpenAPI dokument, da Swagger prikaže enume kao tekst (">", "Critical").
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
